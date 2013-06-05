@@ -9,7 +9,8 @@ install_requires = [
     'flask-script==0.5.3',
     'flask-sqlalchemy',
     'requests',
-    'pymongo'
+    'pymongo',
+    'markupsafe'
 ]
 
 setup(name="minion.frontend",
