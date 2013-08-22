@@ -56,7 +56,7 @@ minionAdminSitesModule.controller("AdminSitesController", function($scope, $rout
                 });
                 d.open().then(function(site) {
                     if (site) {
-                        $http.post('/api/admin/sites/' + site.id, {plans: site.plans}).success(function(response) {
+                        $http.post('/api/admin/sites/' + site.id, {plans: site.plans, url: site.url}).success(function(response) {
                             reload();
                         });
                     }
