@@ -6,7 +6,10 @@
 
 <div class="container" ng-controller="IssueController">
 
-  <h2>Issue Details <span class="pull-right "><small>&larr; <a ng-href="#!/scan/{{scan.id}}">Scan Results</a></small></span></h2>
+  <h2>Issue Details -
+      <span ng-show="issue.False_positive"><span class="false-positive">False Positive</span> <button class="btn" type="button" ng-click="tagFalsePositive(issue.Id, false)">Untag as false positive</button></span>
+      <span ng-show="!issue.False_positive"> <button class="btn" type="button" ng-click="tagFalsePositive(issue.Id, true)">Tag as false positive</button></span>
+      <span class="pull-right "><small>&larr; <a ng-href="#!/scan/{{scan.id}}">Scan Results</a></small></span></h2>
 
   <table class="table table-bordered">
     <tr>
