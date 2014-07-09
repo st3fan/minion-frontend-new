@@ -613,7 +613,7 @@ app.controller("ScanController", function($scope, $routeParams, $http, $location
                                 $scope.ignored_issues.push(issue);
                             }
                             else{
-                                var issue = getIssueById($scope.false_positive_issues, id)
+                                var issue = getIssueById($scope.ignored_issues, id)
                                 $scope.ignored_issues.splice($scope.ignored_issues.indexOf(issue), 1);
                                 $scope.issues.push(issue);
                             }
