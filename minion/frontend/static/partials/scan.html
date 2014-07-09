@@ -86,7 +86,7 @@
                   <th>Risk Summary</th>
                 </tr>
               </thead>
-              <tr ng-repeat="issue in issues">
+              <tr ng-repeat="issue in issues | filter:query | orderBy: orderOption">
                 <td><input type="checkbox" ng-model="checkedIssues[issue.Id]"></td>
                 <td><span class="label severity-{{issue.Severity}} minion-severity-label">{{issue.Severity}}</span></td>
                 <td>{{issue.session.plugin.name}} (v{{issue.session.plugin.version}})</td>
@@ -95,6 +95,7 @@
             </table>
 
             <button class="btn" type="button" ng-click="tagFalsePositive(checkedIssues, true)">Tag selected issues as false positive</button>
+            <button class="btn" type="button" ng-click="tagIgnored(checkedIssues, true)">Tag selected issues as ignored</button>
 
         </div>
 
@@ -120,6 +121,31 @@
             </table>
 
             <button class="btn" type="button" ng-click="tagFalsePositive(checkedFalsePositiveIssues, false)">Untag selected issues as false positive</button>
+
+        </div>
+
+        <div ng-show="ignored_issues.length > 0">
+
+            <h3>Ignored Issues</h3>
+
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Severity</th>
+                  <th>Plugin</th>
+                  <th>Risk Summary</th>
+                </tr>
+              </thead>
+              <tr ng-repeat="issue in ignored_issues">
+                <td><input type="checkbox" ng-model="checkedIgnoredIssues[issue.Id]"></td>
+                <td><span class="label severity-{{issue.Severity}} minion-severity-label">{{issue.Severity}}</span></td>
+                <td>{{issue.session.plugin.name}} (v{{issue.session.plugin.version}})</td>
+                <td><a ng-href="#!/scan/{{scan.id}}/issue/{{issue.Id}}">{{issue.Summary}}</a></td>
+              </tr>
+            </table>
+
+            <button class="btn" type="button" ng-click="tagIgnored(checkedIgnoredIssues, false)">Untag selected issues as ignored</button>
 
         </div>
 
