@@ -75,7 +75,7 @@
 
         <div ng-show="issues.length > 0" class="issues">
 
-            <h3>Found Issues</h3>
+			<h3>Found Issues</h3>
             <span id="issue-search">
                 Search: <input ng-model="query"> Sort by:
                 <select ng-model="orderOption">
@@ -86,22 +86,20 @@
                 </select>
             </span>
 
-            <table class="table table-bordered">
-              <thead>
-                <tr>
-                  <th>Severity</th>
-                  <th>Plugin</th>
-                  <th>Risk Summary</th>
-                </tr>
-              </thead>
-              <tr ng-repeat="issue in issues | filter:query | orderBy: orderOption">
-                <td><span class="label severity-{{issue.Severity}} minion-severity-label">{{issue.Severity}}</span></td>
-                <td>{{issue.session.plugin.name}} (v{{issue.session.plugin.version}})</td>
-                <td><a ng-href="#!/scan/{{scan.id}}/issue/{{issue.Id}}">{{issue.Summary}}</a></td>
-              </tr>
-            </table>
-
-        </div>
+		    <table class="table table-bordered">
+		      <thead>
+		        <tr>
+		          <th>Severity</th>
+		          <th>Plugin</th>
+		          <th>Risk Summary</th>
+		        </tr>
+		      </thead>
+		      <tr ng-repeat="issue in issues | filter:query | orderBy: orderOption">
+		        <td><span class="label severity-{{issue.Severity}} minion-severity-label">{{issue.Severity}}</span></td>
+		        <td>{{issue.session.plugin.name}} (v{{issue.session.plugin.version}})</td>
+		        <td><a ng-href="#!/scan/{{scan.id}}/issue/{{issue.Id}}">{{issue.Summary}}</a></td>
+		      </tr>
+		    </table>
 
         <h3>Workflow</h3>
 
