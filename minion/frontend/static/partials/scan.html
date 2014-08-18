@@ -126,7 +126,7 @@
             <td>{{artifact.name}}</td>
             <td>
                 <div ng-repeat="path in artifact.paths">
-                    <a ng-click="getArtifact(scan.id,path.path)">{{path.path}}</a>
+                    <a ng-click="getArtifact(scan.id,path)">{{path}}</a>
                 </div>
             </td>
           </tr>
