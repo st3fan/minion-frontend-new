@@ -355,7 +355,7 @@ app.controller('SitesController', function($scope, $timeout, $http, $location) {
             $scope.report = response.data;
         });
         // Schedule the next reload
-        reloadPromise = $timeout($scope.reloadSites, 2000);
+        reloadPromise = $timeout($scope.reloadSites, 2000000);
     };
 
     $scope.reloadSites = function() {
@@ -637,6 +637,18 @@ app.filter('scan_datetime', function () {
 app.filter('scan_datetime_fromnow', function () {
     return function(input, options) {
         return (input > 0) ? moment.unix(input).fromNow() : undefined;
+    };
+});
+
+app.filter('site_label', function () {
+    return function(input, list, index) {
+        if (index != 0 && (list[index-1].target == list[index].target)){
+            input = '-';
+        }
+        else{
+            input = list[index].target;
+        }
+        return input;
     };
 });
 
