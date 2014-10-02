@@ -525,7 +525,7 @@ app.controller("ScanController", function($scope, $routeParams, $http, $location
                 var issueCounts = {high: 0, medium: 0, low: 0, info: 0, error: 0};
                 _.each(scan.sessions, function (session) {
                     _.each(session.issues, function (issue) {
-                        issue.session = session;
+                        issue.plugin = session.plugin;
                         issues.push(issue);
                         switch (issue.Severity) {
                             case "High":

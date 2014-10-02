@@ -96,7 +96,7 @@
 		      </thead>
 		      <tr ng-repeat="issue in issues | filter:query | orderBy: orderOption">
 		        <td><span class="label severity-{{issue.Severity}} minion-severity-label">{{issue.Severity}}</span></td>
-		        <td>{{issue.session.plugin.name}} (v{{issue.session.plugin.version}})</td>
+		        <td>{{issue.plugin.name}} (v{{issue.plugin.version}})</td>
 		        <td><a ng-href="#!/scan/{{scan.id}}/issue/{{issue.Id}}">{{issue.Summary}}</a></td>
 		      </tr>
 		    </table>
