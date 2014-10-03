@@ -73,14 +73,24 @@
           <p><strong>This scan was aborted:</strong> {{scan.failure.message}}</p>
         </div>
 
-        <div ng-show="issues.length > 0">
+        <div ng-show="issues.length > 0" class="issues">
 
-            <h3>Found Issues</h3>
+			<h3>Found Issues</h3>
+            <span id="issue-search">
+                Search: <input ng-model="query"> Sort by:
+                <select ng-model="orderOption">
+                    <option value="Summary">Summary (ascending)</option>
+                    <option value="-Summary">Summary (descending)</option>
+                    <option value="position">Severity (ascending)</option>
+                    <option value="-position">Severity (descending)</option>
+                </select>
+            </span>
 
             <table class="table table-bordered">
               <thead>
                 <tr>
                   <th></th>
+                  <th>Status</th>
                   <th>Severity</th>
                   <th>Plugin</th>
                   <th>Risk Summary</th>
@@ -88,14 +98,19 @@
               </thead>
               <tr ng-repeat="issue in issues | filter:query | orderBy: orderOption">
                 <td><input type="checkbox" ng-model="checkedIssues[issue.Id]"></td>
-                <td><span class="label severity-{{issue.Severity}} minion-severity-label">{{issue.Severity}}</span></td>
+                <td>
+                    <span class="label severity-{{issue.Status}} minion-severity-label">{{issue.Status}}</span>
+                </td>
+                <td>
+                    <span class="label severity-{{issue.Severity}} minion-severity-label">{{issue.Severity}}</span>
+                </td>
                 <td>{{issue.session.plugin.name}} (v{{issue.session.plugin.version}})</td>
                 <td><a ng-href="#!/scan/{{scan.id}}/issue/{{issue.Id}}">{{issue.Summary}}</a></td>
               </tr>
             </table>
 
-            <button class="btn" type="button" ng-click="tagFalsePositive(checkedIssues, true)">Tag selected issues as false positive</button>
-            <button class="btn" type="button" ng-click="tagIgnored(checkedIssues, true)">Tag selected issues as ignored</button>
+            <button class="btn" type="button" ng-click="tagIssue(checkedIssues, true, 'FalsePositive')">Tag selected issues as false positive</button>
+            <button class="btn" type="button" ng-click="tagIssue(checkedIssues, true, 'Ignored')">Tag selected issues as ignored</button>
 
         </div>
 
@@ -107,6 +122,7 @@
               <thead>
                 <tr>
                   <th></th>
+                  <th>Status</th>
                   <th>Severity</th>
                   <th>Plugin</th>
                   <th>Risk Summary</th>
@@ -114,13 +130,16 @@
               </thead>
               <tr ng-repeat="issue in false_positive_issues">
                 <td><input type="checkbox" ng-model="checkedFalsePositiveIssues[issue.Id]"></td>
+                <td>
+                    <span class="label severity-{{issue.Status}} minion-severity-label">{{issue.Status}}</span>
+                </td>
                 <td><span class="label severity-{{issue.Severity}} minion-severity-label">{{issue.Severity}}</span></td>
                 <td>{{issue.session.plugin.name}} (v{{issue.session.plugin.version}})</td>
                 <td><a ng-href="#!/scan/{{scan.id}}/issue/{{issue.Id}}">{{issue.Summary}}</a></td>
               </tr>
             </table>
 
-            <button class="btn" type="button" ng-click="tagFalsePositive(checkedFalsePositiveIssues, false)">Untag selected issues as false positive</button>
+            <button class="btn" type="button" ng-click="tagIssue(checkedFalsePositiveIssues, false, 'False positive')">Untag selected issues as false positive</button>
 
         </div>
 
@@ -132,6 +151,7 @@
               <thead>
                 <tr>
                   <th></th>
+                  <th>Status</th>
                   <th>Severity</th>
                   <th>Plugin</th>
                   <th>Risk Summary</th>
@@ -139,13 +159,43 @@
               </thead>
               <tr ng-repeat="issue in ignored_issues">
                 <td><input type="checkbox" ng-model="checkedIgnoredIssues[issue.Id]"></td>
+                <td>
+                    <span class="label severity-{{issue.Status}} minion-severity-label">{{issue.Status}}</span>
+                </td>
                 <td><span class="label severity-{{issue.Severity}} minion-severity-label">{{issue.Severity}}</span></td>
                 <td>{{issue.session.plugin.name}} (v{{issue.session.plugin.version}})</td>
                 <td><a ng-href="#!/scan/{{scan.id}}/issue/{{issue.Id}}">{{issue.Summary}}</a></td>
               </tr>
             </table>
 
-            <button class="btn" type="button" ng-click="tagIgnored(checkedIgnoredIssues, false)">Untag selected issues as ignored</button>
+            <button class="btn" type="button" ng-click="tagIssue(checkedIgnoredIssues, false, 'Ignored')">Untag selected issues as ignored</button>
+
+        </div>
+
+        <div ng-show="fixed_issues.length > 0">
+
+            <h3>Fixed Issues</h3>
+
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Severity</th>
+                  <th>Plugin</th>
+                  <th>Risk Summary</th>
+                </tr>
+              </thead>
+              <tr ng-repeat="issue in fixed_issues">
+                <td>
+                    <span class="label severity-{{issue.Status}} minion-severity-label">{{issue.Status}}</span>
+                </td>
+                <td class="span3">
+                    <span class="label severity-{{issue.Severity}} minion-severity-label">{{issue.Severity}}</span>
+                </td>
+                <td>{{issue.session.plugin.name}} (v{{issue.session.plugin.version}})</td>
+                <td><a ng-href="#!/scan/{{scan.id}}/issue/{{issue.Id}}">{{issue.Summary}}</a></td>
+              </tr>
+            </table>
 
         </div>
 
@@ -169,6 +219,31 @@
             <!--<td ng-bind-html-unsafe="scan.plan.workflow[$index].description|link_bugs"></td>-->
           </tr>
         </table>
+
+        <div ng-show="artifacts.length > 0">
+
+            <h3>Artifacts</h3>
+
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Plugin</th>
+                  <th>Artifact name</th>
+                  <th>Links</th>
+                </tr>
+              </thead>
+              <tr ng-repeat="artifact in artifacts">
+                <td>{{artifact.session.plugin.name}} (v{{artifact.session.plugin.version}})</td>
+                <td>{{artifact.name}}</td>
+                <td>
+                    <div ng-repeat="path in artifact.paths">
+                        <a ng-click="getArtifact(scan.id,path)">{{path}}</a>
+                    </div>
+                </td>
+              </tr>
+            </table>
+
+        </div>
 
         <div ng-show="failures.length > 0">
 

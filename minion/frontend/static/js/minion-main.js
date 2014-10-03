@@ -286,11 +286,46 @@ app.run(function($rootScope, $location) {
 });
 
 app.controller("LoginController", function($scope, $rootScope, $location, $http) {
+
+    function login(data){
+        $http.post('/api/login', data).success(function(response) {
+            if (response.success) {
+                // Remember the session in the scope
+                $rootScope.session = response.data;
+                // Remember the session in local storage
+                localStorage.setItem('session.email', response.data.email);
+                localStorage.setItem('session.role', response.data.role);
+                localStorage.setItem('invitation.id', null);
+                // Go to either the nextPath or to the main page
+                var nextPath = sessionStorage.getItem('nextPath');
+                if (nextPath) {
+                    $location.path(nextPath).replace();
+                    sessionStorage.setItem(nextPath, null);
+                } else {
+                    $location.path("/").replace();
+                }
+            }
+            else {
+                $scope.logInStatus = response.reason;
+            }
+        });
+    }
+
     $scope.signIn = function() {
         navigator.id.request();
     };
 
+    $scope.ldapSignIn = function() {
+        var data = {user: $scope.ldap.user, password: $scope.ldap.password};
+        login(data);
+    };
+
     $scope.$on('$viewContentLoaded', function() {
+        $http.get("/api/login").success(function(response) {
+            if (response.success) {
+                $scope.login_type = response.data.login_type;
+                }});
+
         // When the login screen is loaded, we logout from Persona and kill our session
         // from both the root scope and from localStorage.
 
@@ -302,24 +337,8 @@ app.controller("LoginController", function($scope, $rootScope, $location, $http)
         navigator.id.watch({
             onlogin: function(assertion) {
                 var data = {assertion: assertion};
-                $http.post('/api/login', data).success(function(response) {
-                    if (response.success) {
-                        // Remember the session in the scope
-                        $rootScope.session = response.data;
-                        // Remember the session in local storage
-                        localStorage.setItem('session.email', response.data.email);
-                        localStorage.setItem('session.role', response.data.role);
-                        localStorage.setItem('invitation.id', null);
-                        // Go to either the nextPath or to the main page
-                        var nextPath = sessionStorage.getItem('nextPath');
-                        if (nextPath) {
-                            $location.path(nextPath).replace();
-                            sessionStorage.setItem(nextPath, null);
-                        } else {
-                            $location.path("/").replace();
-                        }
-                    }
-                });
+                login(data);
+
             },
             onlogout: function() {
                 // Not used
@@ -371,6 +390,11 @@ app.controller('SitesController', function($scope, $timeout, $http, $location) {
     };
 
     $scope.$on('$viewContentLoaded', function() {
+        $http.get("/api/administrators").success(function(response) {
+            if (response.success) {
+                $scope.administrators = response.data;
+            }
+        });
         $http.get("/api/profile").success(function(response) {
             if (response.success) {
                 $scope.groups = response.data.groups;
@@ -516,13 +540,71 @@ app.controller("RawController", function ($scope, $routeParams, $http, $location
 });
 
 app.controller("ScanController", function($scope, $routeParams, $http, $location) {
+
+    $scope.getArtifact = function(scanId, artifactName) {
+        window.open('/api/scan/' + scanId + '/artifact/' + artifactName, '_blank', '');
+    }
+
     $scope.$on('$viewContentLoaded', function() {
+        loadScan()
+    });
+
+    $scope.tagIssue = function(checkedBoxes, boolean, status) {
+        angular.forEach(checkedBoxes, function(checked, id) {
+            if(checked) {
+                $http.put('/api/issue/tagIssue', {issueId: id, boolean: boolean, status: status}).success(function(response) {
+                    if (response.success) {
+                        loadScan()
+                        //if (boolean){
+                        //    loadScan()
+                            //var issue = getIssueById($scope.issues, id)
+                            //$scope.issues.splice($scope.issues.indexOf(issue), 1);
+                            //if (status == "False positive") {
+                            //    $scope.false_positive_issues.push(issue);
+                            //}
+                            //else if (status == "Ignored") {
+                            //    $scope.ignored_issues.push(issue);
+                            //}
+                        //}
+                        //else{
+                        //loadScan()
+                        //    if (status == "False positive") {
+                        //        var issue = getIssueById($scope.false_positive_issues, id);
+                        //        $scope.ignored_issues.splice($scope.ignored_issues.indexOf(issue), 1);
+                        //        $scope.issues.push(issue);
+                        //    }
+                        //    else if (status == "Ignored") {
+                        //        var issue = getIssueById($scope.ignored_issues, id)
+                        //        $scope.ignored_issues.splice($scope.ignored_issues.indexOf(issue), 1);
+                        //        $scope.issues.push(issue);
+                        //    }
+
+                        //}
+                    }
+                });
+            }
+        });
+        $scope.checkedIssues = {};
+        $scope.checkedFalsePositiveIssues = {};
+    };
+
+    function getIssueById (issues, id) {
+        for (var i = 0; i < issues.length; i++) {
+            if (issues[i].Id == id) {
+                return issues[i];
+            }
+        }
+    }
+
+    function loadScan () {
         $http.get('/api/scan/' + $routeParams.scanId).success(function(response) {
             if (response.success) {
                 var scan = response.data;
                 var issues = [];
+                var artifacts = [];
                 var false_positive_issues = [];
                 var ignored_issues = [];
+                var fixed_issues = [];
                 $scope.timenow = Math.round(+new Date()/1000);
                 var issueCounts = {high: 0, medium: 0, low: 0, info: 0, error: 0};
                 _.each(scan.sessions, function (session) {
@@ -530,31 +612,42 @@ app.controller("ScanController", function($scope, $routeParams, $http, $location
                         issue.session = session;
                         switch (issue.Severity) {
                             case "High":
+                                issue.position = 4;
                                 issueCounts.high++;
                                 break;
                             case "Medium":
+                                issue.position = 3;
                                 issueCounts.medium++;
                                 break;
                             case "Low":
+                                issue.position = 2;
                                 issueCounts.low++;
                                 break;
                             case "Informational":
                             case "Info":
+                                issue.position = 1;
                                 issueCounts.info++;
                                 break;
                             case "Error":
                                 issueCounts.error++;
                                 break;
                         }
-                        if (issue.False_positive) {
+                        if( issue.Status == "Fixed" ) {
+                            fixed_issues.push(issue);
+                        }
+                        else if (issue.Status == "FalsePositive") {
                             false_positive_issues.push(issue);
                         }
-                        else if(issue.Ignored){
+                        else if(issue.Status == "Ignored"){
                             ignored_issues.push(issue);
                         }
                         else{
                             issues.push(issue);
                         }
+                    });
+                    _.each(session.artifacts, function (artifact) {
+                        artifact.session = session;
+                        artifacts.push(artifact);
                     });
                 });
             } else {
@@ -572,67 +665,16 @@ app.controller("ScanController", function($scope, $routeParams, $http, $location
             $scope.issues = issues;
             $scope.false_positive_issues = false_positive_issues;
             $scope.ignored_issues = ignored_issues;
+            $scope.fixed_issues = fixed_issues;
             $scope.issueCounts = issueCounts;
+            $scope.artifacts = artifacts
             $scope.failures = failures;
+            console.log($scope.artifacts);
             $scope.checkedIssues = {};
             $scope.checkedFalsePositiveIssues = {};
             $scope.checkedIgnoredIssues = {};
         });
-
-        $scope.tagFalsePositive = function(checkedBoxes, boolean) {
-            angular.forEach(checkedBoxes, function(checked, id) {
-                if(checked) {
-                    $http.put('/api/issue/tagFalsePositive', {issueId: id, boolean: boolean}).success(function(response) {
-                        if (response.success) {
-                            if (boolean){
-                                var issue = getIssueById($scope.issues, id)
-                                $scope.issues.splice($scope.issues.indexOf(issue), 1);
-                                $scope.false_positive_issues.push(issue);
-                            }
-                            else{
-                                var issue = getIssueById($scope.false_positive_issues, id)
-                                $scope.false_positive_issues.splice($scope.false_positive_issues.indexOf(issue), 1);
-                                $scope.issues.push(issue);
-                            }
-                        }
-                    });
-                }
-            });
-            $scope.checkedIssues = {};
-            $scope.checkedFalsePositiveIssues = {};
-        };
-
-        $scope.tagIgnored = function(checkedBoxes, boolean) {
-            angular.forEach(checkedBoxes, function(checked, id) {
-                if(checked) {
-                    $http.put('/api/issue/tagIgnored', {issueId: id, boolean: boolean}).success(function(response) {
-                        if (response.success) {
-                            if (boolean){
-                                var issue = getIssueById($scope.issues, id)
-                                $scope.issues.splice($scope.issues.indexOf(issue), 1);
-                                $scope.ignored_issues.push(issue);
-                            }
-                            else{
-                                var issue = getIssueById($scope.ignored_issues, id)
-                                $scope.ignored_issues.splice($scope.ignored_issues.indexOf(issue), 1);
-                                $scope.issues.push(issue);
-                            }
-                        }
-                    });
-                }
-            });
-            $scope.checkedIssues = {};
-            $scope.checkedIgnoredIssues = {};
-        };
-
-        function getIssueById (issues, id) {
-            for (var i = 0; i < issues.length; i++) {
-                if (issues[i].Id == id) {
-                    return issues[i];
-                }
-            }
-        }
-    });
+    }
 });
 
 app.controller("PlanController", function($scope, $routeParams, $http, $location) {
@@ -652,18 +694,10 @@ app.controller("IssueController", function($scope, $routeParams, $http) {
         });
     });
 
-    $scope.tagFalsePositive = function (issueId, boolean) {
-        $http.put('/api/issue/tagFalsePositive', {issueId: issueId, boolean: boolean}).success(function(response) {
+    $scope.tagIssue = function (issueId, boolean, status) {
+        $http.put('/api/issue/tagIssue', {issueId: issueId, boolean: boolean, status: status}).success(function(response) {
             if (response.success) {
-                $scope.issue.False_positive = boolean;
-            }
-        });
-    };
-
-    $scope.tagIgnored = function (issueId, boolean) {
-        $http.put('/api/issue/tagIgnored', {issueId: issueId, boolean: boolean}).success(function(response) {
-            if (response.success) {
-                $scope.issue.Ignored = boolean;
+                $scope.issue.Status = status;
             }
         });
     };
@@ -718,6 +752,18 @@ app.filter('scan_datetime', function () {
 app.filter('scan_datetime_fromnow', function () {
     return function(input, options) {
         return (input > 0) ? moment.unix(input).fromNow() : undefined;
+    };
+});
+
+app.filter('site_label', function () {
+    return function(input, list, index) {
+        if (index != 0 && (list[index-1].target == list[index].target)){
+            input = '-';
+        }
+        else{
+            input = list[index].target;
+        }
+        return input;
     };
 });
 
