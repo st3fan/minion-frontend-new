@@ -13,23 +13,23 @@ DEFAULT_FRONTEND_CONFIG = {
         'url': 'http://127.0.0.1:8383'
     },
     'login': {
-		'type': 'persona', # persona OR ldap
+        'type': 'persona', # persona OR ldap
 
-		'ldap' : {
-			'uri': 'ldaps://ldap.server/', # URI of the LDAP server
-			'base': 'ou=test,dc=test_dc', # base dn for bind & search
+        'ldap': {
+            'uri': 'ldaps://ldap.server/', # URI of the LDAP server
+            'base': 'ou=test,dc=test_dc', # base dn for bind & search
 
-			'uid_filter' : 'uid', # Filter for the username (uid, samAccountName...)
-			'mail_filter' : 'mail', # Filter for the mail (mail, email...)
+            'usernameAttribute': 'uid', # Attribute for the username (uid, samAccountName...)
+            'mailAttribute': 'mail', # Attribute for the mail (mail, email...)
 
-			'check_authorized_groups' : True, # True if we want to check if the user is in a list of groups
+            'check_authorized_groups': True, # True if we want to check if the user is in a list of groups
 
-			'group_objectClass' : 'groupOfNames', # objectClass to check the group
-			'group_base' : 'ou=group,dc=test_dc', # base dn for search to check the group
+            'groupObjectClass': 'groupOfNames', # objectClass to check the group
+            'groupBase': 'ou=group,dc=test_dc', # base dn for search to check the group
 
-			'authorized_groups' : ['groupTest1', 'groupTest2'] # List of the authorized groups
-		}
-	}
+            'authorized_groups': ['groupTest1', 'groupTest2'] # List of the authorized groups
+        }
+    }
 }
 
 

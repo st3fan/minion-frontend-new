@@ -399,7 +399,7 @@ def api_login():
 
 @app.route("/api/login", methods=["POST"])
 def login():
-	return globals()[config['login']['type'] + '_login'](request)
+    return globals()[config['login']['type'] + '_login'](request)
 
 def persona_login(request):
     if not request.json or 'assertion' not in request.json:
@@ -433,7 +433,11 @@ def ldap_login(request):
     except ldap.LDAPError, e:
         return jsonify(success=False, reason="error")
 
-    auth = config['login']['ldap']['uid_filter'] + "=%s," % username + config['login']['ldap']['base']
+    base_dn = config['login']['ldap']['base']
+    auth = config['login']['ldap']['usernameAttribute'] + "=%s" % username
+
+    if base_dn:
+        auth += "," + base_dn
 
     # Authentication
     try:
@@ -444,33 +448,32 @@ def ldap_login(request):
         return jsonify(success=False, reason="error")
 
     # Retrieve mail
-    searchScope = ldap.SCOPE_SUBTREE
-    results = ld.search_s(auth, searchScope, attrlist=[str(config['login']['ldap']['mail_filter'])])
+    search_scope = ldap.SCOPE_SUBTREE
+    results = ld.search_s(auth, search_scope, attrlist=[str(config['login']['ldap']['mailAttribute'])])
 
     try:
-        mail = results[0][1][config['login']['ldap']['mail_filter']][0]
+        mail = results[0][1][config['login']['ldap']['mailAttribute']][0]
     except Exception as e:
-        return jsonify(sucess=False, reason="error")
+        return jsonify(success=False, reason="error")
 
     if config['login']['ldap']['check_authorized_groups']:
         # Check if user in an authorized group
-        group_base = config['login']['ldap']['group_base']
 
         authorized = False
         for group in config['login']['ldap']['authorized_groups']:
-            filter_group = "(&(objectClass=" + config['login']['ldap']['group_objectClass']+ ")"\
-					+ "(member=" + config['login']['ldap']['uid_filter'] + "=%s," %username \
-					+ config['login']['ldap']['base'] + ")"\
-					+ "(cn=%s))" % str(group)
-				
-	    results = ld.search_s(group_base, searchScope, filter_group)
+            filter_group = ("(&"
+                            "(objectClass={ldap[groupObjectClass]})"
+                            "(member={ldap[usernameAttribute]}={username},{ldap[base]})"
+                            "(cn={group})"
+                            ")".format(ldap=config['login']['ldap'], username=username, group=group))
+            results = ld.search_s(config['login']['ldap']['groupBase'], search_scope, filter_group)
 
             if len(results) > 0:
                 authorized = True
                 break
 
         if not authorized:
-            return jsonify(sucess=False, reason="not_authorized")
+            return jsonify(success=False, reason="not_authorized")
 
     # Login
     user = login_or_create_user(mail)
