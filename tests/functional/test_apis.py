@@ -7,7 +7,9 @@ import requests
 
 BASE = "http://127.0.0.1:5000"
 
+
 class TestFrontEndAPI(unittest.TestCase):
+
     def test_index_return_200(self):
         res = requests.get(BASE + "/")
         self.assertEqual(res.status_code, 200)

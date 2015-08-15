@@ -14,10 +14,13 @@ import os
 # groupMembershipAttribute -> typically member or uniqueMember
 # usernameAttribute -> typically uid in OpenLDAP or samAccountName in AD
 #
-# checkAuthorizedGroups -> if true (instead of false), require group membership in addition to valid user id
-# authorizedGroups -> list of groups where users are authorized to use Minion (if checkAuthorizedGroups is true)
+# checkAuthorizedGroups -> if true (instead of false), require group membership
+#   in addition to valid user id
+# authorizedGroups -> list of groups where users are authorized to use
+# Minion (if checkAuthorizedGroups is true)
 
 DEFAULT_CONFIG_PATH = "/etc/minion"
+
 
 def _load_config(name, default_path=DEFAULT_CONFIG_PATH):
     """
@@ -34,10 +37,12 @@ def _load_config(name, default_path=DEFAULT_CONFIG_PATH):
             return json.load(fp)
 
     # Fallback to using the Minion defaults
-    cwfd = os.path.dirname(os.path.realpath(__file__))  # the directory of utils.py
+    # the directory of utils.py
+    cwfd = os.path.dirname(os.path.realpath(__file__))
     jsonf = os.path.realpath(os.path.join(cwfd, '..', '..', 'etc', name))
     with open(jsonf) as fp:
         return json.load(fp)
+
 
 def frontend_config():
     """
