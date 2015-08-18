@@ -382,7 +382,7 @@ def _backend_get_scans(site_id, plan_name, limit=3):
 
 
 def requires_session(*decor_args):
-    '''
+    """
     Check if user is logged in or not by checking
     'email' is in session. This is done by default
     without giving any argument to the decorator.
@@ -397,7 +397,7 @@ def requires_session(*decor_args):
     @reqiores_session('administrator')
     def view_func(...)
 
-    '''
+    """
 
     def decorator(view):
         @functools.wraps(view)
@@ -896,11 +896,11 @@ def post_api_admin_groups_group_name_sites(group_name):
 
 
 def requires_ws_auth(*decorator_args):
-    '''
+    """
     Check if the request has an X-Minion-Api-Key and X-Minion-Api-User header.
     If it does, then match it against the user and store the user in g.api_user
     so that handlers can use it.
-    '''
+    """
     def decorator(view):
         @functools.wraps(view)
         def check_api_key(*args, **kwargs):
