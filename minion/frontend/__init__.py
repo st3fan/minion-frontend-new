@@ -4,10 +4,10 @@
 
 from flask import Flask
 
-app = Flask(__name__);
+app = Flask(__name__)
 
-from minion.frontend import views
 from minion.frontend.utils import frontend_config
+
 
 def configure_app(app, production=True, debug=True):
     app.debug = debug
@@ -15,8 +15,10 @@ def configure_app(app, production=True, debug=True):
     if production:
         config = frontend_config()
         if config.get('session-secret') is None:
-            raise Exception("Configure a sesssion-secret in the configuration for production usage")
+            raise Exception(
+                "Configure a sesssion-secret in the configuration "
+                "for production usage")
         app.secret_key = config.get('session-secret')
     else:
-        app.secret_key =  "ThisIsOnlyForDevelopmentMode"
+        app.secret_key = "ThisIsOnlyForDevelopmentMode"
     return app

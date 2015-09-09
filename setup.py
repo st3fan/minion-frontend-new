@@ -20,5 +20,5 @@ setup(name="minion.frontend",
       packages=['minion', 'minion.frontend'],
       namespace_packages=['minion'],
       include_package_data=True,
-      install_requires = install_requires,
-      scripts = ['scripts/minion-frontend'])
+      install_requires=install_requires,
+      scripts=['scripts/minion-frontend'])
