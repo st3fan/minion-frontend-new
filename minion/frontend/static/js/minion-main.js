@@ -688,11 +688,17 @@ app.controller("RawController", function ($scope, $routeParams, $http, $location
 });
 
 app.controller("ScanController", function($scope, $routeParams, $http, $location) {
+
+    $scope.getArtifact = function(scanId, artifactName) {
+        window.open('/api/scan/' + scanId + '/artifact/' + artifactName, '_blank', '');
+    }
+
     $scope.$on('$viewContentLoaded', function() {
         $http.get('/api/scan/' + $routeParams.scanId).success(function(response) {
             if (response.success) {
                 var scan = response.data;
                 var issues = [];
+                var artifacts = [];
                 $scope.timenow = Math.round(+new Date()/1000);
                 var issueCounts = {critical: 0, high: 0, medium: 0, low: 0, info: 0, error: 0};
                 _.each(scan.sessions, function (session) {
@@ -721,6 +727,10 @@ app.controller("ScanController", function($scope, $routeParams, $http, $location
                                 break;
                         }
                     });
+                    _.each(session.artifacts, function (artifact) {
+                        artifact.session = session;
+                        artifacts.push(artifact);
+                    });
                 });
             } else {
                 $location.path('/404');
@@ -736,6 +746,7 @@ app.controller("ScanController", function($scope, $routeParams, $http, $location
             $scope.scan = scan;
             $scope.issues = issues;
             $scope.issueCounts = issueCounts;
+            $scope.artifacts = artifacts
             $scope.failures = failures;
         });
     });
