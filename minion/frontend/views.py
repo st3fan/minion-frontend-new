@@ -9,11 +9,9 @@ import uuid
 
 from flask import jsonify, request, session, Response, g
 
-from minion.frontend import app
+from minion.frontend import app, http
 from minion.frontend.persona import verify_assertion
 from minion.frontend.utils import frontend_config
-
-import requests
 
 config = frontend_config()
 
@@ -22,7 +20,7 @@ config = frontend_config()
 #
 
 def login_user(email):
-    r = requests.put(config['backend-api']['url'] + "/login",
+    r = http.put("/login",
         headers={'Content-Type': 'application/json'},
         data=json.dumps({'email': email}))
     r.raise_for_status()
@@ -32,7 +30,7 @@ def login_user(email):
     return j.get('user')
 
 def get_user(email):
-    r = requests.get(config['backend-api']['url'] + "/users/" + email)
+    r = http.get("/users/" + email)
     r.raise_for_status()
     j = r.json()
     if not j['success']:
@@ -41,7 +39,7 @@ def get_user(email):
 
 def create_user(email, role):
     user = { 'email': email, 'role': role }
-    r = requests.post(config['backend-api']['url'] + "/users",
+    r = http.post("/users",
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps(user))
     r.raise_for_status()
@@ -79,7 +77,7 @@ def get_history_report(user=None):
     params = {}
     if user is not None:
         params['user'] = user
-    r = requests.get(config['backend-api']['url'] + "/reports/history", params={'user': session['email']})
+    r = http.get("/reports/history", params={'user': session['email']})
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -92,7 +90,7 @@ def get_status_report(user=None, group_name=None):
         params['user'] = user
         if group_name is not None:
             params['group_name'] = group_name
-    r = requests.get(config['backend-api']['url'] + "/reports/status", params=params)
+    r = http.get("/reports/status", params=params)
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -103,7 +101,7 @@ def get_issues_report(user=None):
     params = {}
     if user is not None:
         params['user'] = user
-    r = requests.get(config['backend-api']['url'] + "/reports/issues", params={'user': session['email']})
+    r = http.get("/reports/issues", params={'user': session['email']})
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -111,7 +109,7 @@ def get_issues_report(user=None):
     return j.get('report')
 
 def _backend_get_plugins():
-    r = requests.get(config['backend-api']['url'] + "/plugins")
+    r = http.get("/plugins")
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -122,7 +120,7 @@ def _backend_get_sites(url=None):
     params = {}
     if url:
         params['url'] = url
-    r = requests.get(config['backend-api']['url'] + "/sites", params=params)
+    r = http.get("/sites", params=params)
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -131,7 +129,7 @@ def _backend_get_sites(url=None):
 
 
 def _backend_get_credInfo():
-    r = requests.get(config['backend-api']['url'] + "/credInfo")
+    r = http.get("/credInfo")
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -140,7 +138,7 @@ def _backend_get_credInfo():
 
 
 def _backend_get_site(site_id):
-    r = requests.get(config['backend-api']['url'] + "/sites/" + site_id)
+    r = http.get("/sites/" + site_id)
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -149,7 +147,7 @@ def _backend_get_site(site_id):
 
 
 def _backend_add_site(site):
-    r = requests.post(config['backend-api']['url'] + "/sites",
+    r = http.post("/sites",
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps(site))
     r.raise_for_status()
@@ -159,7 +157,7 @@ def _backend_add_site(site):
     return j.get('site'),None
 
 def _backend_update_site(site_id, site):
-    r = requests.post(config['backend-api']['url'] + "/sites/" + site_id,
+    r = http.post("/sites/" + site_id,
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps(site))
     r.raise_for_status()
@@ -170,7 +168,7 @@ def _backend_update_site(site_id, site):
 
 def _backend_add_invite(invite, sender):
     invite['sender'] = sender
-    r = requests.post(config['backend-api']['url'] + "/invites",
+    r = http.post("/invites",
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps(invite))
     r.raise_for_status()
@@ -181,14 +179,14 @@ def _backend_add_invite(invite, sender):
 
 def _backend_get_invite(id=None, recipient=None, sender=None):
     if id is not None:
-        r = requests.get(config['backend-api']['url'] + "/invites/%s" % id)
+        r = http.get("/invites/%s" % id)
     else:
         params = {}
         if recipient is not None:
             params['recipient'] = recipient
         if sender is not None:
             params['sender'] = sender
-        r = requests.get(config['backend-api']['url'] + "/invites", params=params)
+        r = http.get("/invites", params=params)
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -196,7 +194,7 @@ def _backend_get_invite(id=None, recipient=None, sender=None):
     return j.get('invite') or j.get('invites')
 
 def _backend_control_invite(id, action_data):
-    r = requests.post(config['backend-api']['url'] + "/invites/%s/control" % id,
+    r = http.post("/invites/%s/control" % id,
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps(action_data))
     r.raise_for_status()
@@ -206,7 +204,7 @@ def _backend_control_invite(id, action_data):
     return j.get('invite')
 
 def _backend_delete_invite(id):
-    r = requests.delete(config['backend-api']['url'] + '/invites/%s' % id)
+    r = http.delete('/invites/%s' % id)
     r.raise_for_status()
     j = r.json()
     return j
@@ -215,7 +213,7 @@ def _backend_get_plans(name=None):
     params = {}
     if name:
         params['name'] = name
-    r = requests.get(config['backend-api']['url'] + "/plans", params=params)
+    r = http.get("/plans", params=params)
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -223,7 +221,7 @@ def _backend_get_plans(name=None):
     return j.get('plans')
 
 def _backend_create_plan(plan):
-    r = requests.post(config['backend-api']['url'] + "/plans",
+    r = http.post("/plans",
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps(plan))
     r.raise_for_status()
@@ -233,7 +231,7 @@ def _backend_create_plan(plan):
     return j.get('plan')
 
 def _backend_update_plan(plan_name, plan):
-    r = requests.post(config['backend-api']['url'] + "/plans/" + plan_name,
+    r = http.post("/plans/" + plan_name,
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps(plan))
     r.raise_for_status()
@@ -243,7 +241,7 @@ def _backend_update_plan(plan_name, plan):
     return j.get('plan')
 
 def _backend_delete_plan(plan_name):
-    r = requests.delete(config['backend-api']['url'] + "/plans/" + plan_name)
+    r = http.delete("/plans/" + plan_name)
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -251,7 +249,7 @@ def _backend_delete_plan(plan_name):
     return True
 
 def _backend_list_users():
-    r = requests.get(config['backend-api']['url'] + "/users")
+    r = http.get("/users")
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -259,7 +257,7 @@ def _backend_list_users():
     return j.get('users')
 
 def _backend_add_user(user):
-    r = requests.post(config['backend-api']['url'] + "/users",
+    r = http.post("/users",
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps(user))
     r.raise_for_status()
@@ -269,7 +267,7 @@ def _backend_add_user(user):
     return j.get('user')
 
 def _backend_update_user(user_email, user):
-    r = requests.post(config['backend-api']['url'] + "/users/" + user_email,
+    r = http.post("/users/" + user_email,
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps(user))
     r.raise_for_status()
@@ -279,7 +277,7 @@ def _backend_update_user(user_email, user):
     return j.get('user')
 
 def _backend_delete_user(user_email):
-    r = requests.delete(config['backend-api']['url'] + "/users/" + user_email)
+    r = http.delete("/users/" + user_email)
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -287,7 +285,7 @@ def _backend_delete_user(user_email):
     return True
 
 def _backend_list_groups():
-    r = requests.get(config['backend-api']['url'] + "/groups")
+    r = http.get("/groups")
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -295,7 +293,7 @@ def _backend_list_groups():
     return j.get('groups')
 
 def _backend_delete_group(group_id):
-    r = requests.delete(config['backend-api']['url'] + "/groups/" + group_id)
+    r = http.delete("/groups/" + group_id)
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -303,7 +301,7 @@ def _backend_delete_group(group_id):
     return True
 
 def _backend_get_group(group_name):
-    r = requests.get(config['backend-api']['url'] + "/groups/" + group_name)
+    r = http.get("/groups/" + group_name)
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -311,7 +309,7 @@ def _backend_get_group(group_name):
     return j.get('group')
 
 def _backend_add_group(group):
-    r = requests.post(config['backend-api']['url'] + "/groups",
+    r = http.post("/groups",
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps(group))
     r.raise_for_status()
@@ -321,7 +319,7 @@ def _backend_add_group(group):
     return j.get('group')
 
 def _backend_delete_group(group_name):
-    r = requests.delete(config['backend-api']['url'] + "/groups/" + group_name)
+    r = http.delete("/groups/" + group_name)
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -329,7 +327,7 @@ def _backend_delete_group(group_name):
     return True
 
 def _backend_patch_group(group_name, patch):
-    r = requests.patch(config['backend-api']['url'] + "/groups/" + group_name,
+    r = http.patch("/groups/" + group_name,
                        headers={'Content-Type': 'application/json'},
                        data=json.dumps(patch))
     r.raise_for_status()
@@ -340,7 +338,7 @@ def _backend_patch_group(group_name, patch):
 
 def _backend_get_scans(site_id, plan_name, limit=3):
     params = {'site_id': site_id, 'plan_name': plan_name, 'limit': limit}
-    r = requests.get(config['backend-api']['url'] + "/scans", params=params)
+    r = http.get("/scans", params=params)
     r.raise_for_status()
     j = r.json()
     if not j.get('success'):
@@ -595,7 +593,7 @@ def api_sites():
 @app.route("/api/scan/<minion_scan_id>/issue/<minion_issue_id>")
 @requires_session
 def api_scan_issue(minion_scan_id, minion_issue_id):
-    r = requests.get(config['backend-api']['url'] + "/scans/" + minion_scan_id,
+    r = http.get("/scans/" + minion_scan_id,
             params={'email': session['email']})
     j = r.json()
     if j['success']:
@@ -611,7 +609,7 @@ def api_scan_issue(minion_scan_id, minion_issue_id):
 @app.route("/api/scan/<minion_scan_id>")
 @requires_session
 def api_scan(minion_scan_id):
-    r = requests.get(config['backend-api']['url'] + "/scans/" + minion_scan_id,
+    r = http.get("/scans/" + minion_scan_id,
             params={'email': session['email']})
     if r.json()['success']:
         return jsonify(success=True, data=r.json()['scan'])
@@ -621,8 +619,8 @@ def api_scan(minion_scan_id):
 @app.route("/api/plan/<minion_plan_name>")
 @requires_session
 def api_plan(minion_plan_name):
-    r = requests.get(
-        config['backend-api']['url'] + "/plans/" + minion_plan_name,
+    r = http.get(
+        "/plans/" + minion_plan_name,
         params={"email": session['email']})
     plan = r.json()['plan']
     return jsonify(success=True,data=plan)
@@ -634,7 +632,7 @@ def api_scan_start():
     plan = request.json['plan']
     target = request.json['target']
     # Create a scan
-    r = requests.post(config['backend-api']['url'] + "/scans",
+    r = http.post("/scans",
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps({
                           'user': session['email'],
@@ -643,7 +641,7 @@ def api_scan_start():
     r.raise_for_status()
     scan = r.json()['scan']
     # Start the scan
-    r = requests.put(config['backend-api']['url'] + "/scans/" + scan['id'] + "/control",
+    r = http.put("/scans/" + scan['id'] + "/control",
                      headers={'Content-Type': 'text/plain'},
                      data="START",
                      params={'email': session['email']})
@@ -657,7 +655,7 @@ def api_scan_stop():
     # Get the scan id
     scan_id = request.json['scanId']
     # Stop the scan
-    r = requests.put(config['backend-api']['url'] + "/scans/" + scan_id + "/control",
+    r = http.put("/scans/" + scan_id + "/control",
                      headers={'Content-Type': 'text/plain'},
                      data="STOP",
                      params={'email': session['email']})
@@ -947,7 +945,7 @@ def ws_get_scans():
 @app.route("/ws/scans/<scan_id>", methods=['GET'])
 @requires_ws_auth
 def ws_get_scan(scan_id):
-    r = requests.get(config['backend-api']['url'] + "/scans/" + scan_id) # TODO , params={'email': session['email']})
+    r = http.get("/scans/" + scan_id) # TODO , params={'email': session['email']})
     if r.json()['success']:
         print "SCAN", r.json()['scan']
         return jsonify(success=True, scan=r.json()['scan'])
@@ -970,7 +968,7 @@ def put_ws_scans():
     configuration = { "target": site["url"], "callback": { "url": request.json["callbackURL"], "events": ['scan-state'] } }
 
     # Create a scan
-    r = requests.post(config["backend-api"]["url"] + "/scans",
+    r = http.post("/scans",
                       headers={"Content-Type": "application/json"},
                       data=json.dumps({"user": g.api_user["email"],
                                        "plan": plan,
@@ -979,7 +977,7 @@ def put_ws_scans():
     scan = r.json()["scan"]
 
     # Start the scan
-    r = requests.put(config["backend-api"]["url"] + "/scans/" + scan["id"] + "/control",
+    r = http.put("/scans/" + scan["id"] + "/control",
                      headers={"Content-Type": "text/plain"},
                      data="START")
     r.raise_for_status()
@@ -996,7 +994,7 @@ def get_ws_issues():
     params = { "group_name": request.args.get("group_name"),
                "plan_name": request.args.get("plan_name"),
                "issue_code": request.args.getlist("issue_code") }
-    r = requests.get(config["backend-api"]["url"] + "/issues", params=params)
+    r = http.get("/issues", params=params)
     r.raise_for_status()
     j = r.json()
     if j["success"]:
@@ -1007,7 +1005,7 @@ def get_ws_issues():
 
 @app.route("/api/scanschedule", methods=["PUT"])
 def scanschedule():
-  r = requests.post(config["backend-api"]["url"] + "/scanschedule",
+  r = http.post("/scanschedule",
                     headers={"Content-Type": "application/json"},
                     data=json.dumps(request.json))
   r.raise_for_status()
@@ -1017,7 +1015,7 @@ def scanschedule():
 
 @app.route("/api/setCredentials", methods=["PUT"])
 def setCredentials():
-  r = requests.post(config["backend-api"]["url"] + "/setCredentials",
+  r = http.post("/setCredentials",
                     headers={"Content-Type": "application/json"},
                     data=json.dumps(request.json))
   r.raise_for_status()

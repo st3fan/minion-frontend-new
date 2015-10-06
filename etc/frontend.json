@@ -1,5 +1,6 @@
 {
-    "backend-api": {
+    "api": {
+        "key": "SECRETKEYHERE",
         "url": "http://minion-backend:8383"
     },
 
@@ -24,8 +25,8 @@
         "oauth": {
             "providers": {
                 "facebook": {
-                     "client_id": "",
-                     "client_secret": ""
+                    "client_id": "",
+                    "client_secret": ""
                  },
                 "firefoxaccounts": {
                     "client_id": "",
