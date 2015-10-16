@@ -196,7 +196,8 @@ def _backend_get_invite(id=None, recipient=None, sender=None):
     return j.get('invite') or j.get('invites')
 
 def _backend_control_invite(id, action_data):
-    r = requests.post(config['backend-api']['url'] + "/invites/%s/control" % id,
+    api = "/invites/%s/%s" % (id, action_data['action'])
+    r = requests.post(config['backend-api']['url'] + api,
                       headers={'Content-Type': 'application/json'},
                       data=json.dumps(action_data))
     r.raise_for_status()
